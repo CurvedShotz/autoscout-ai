@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models import SearchRequest
 from app.services.auto_dev_client import AutoDevClient
+from app.services.vehicle_listing_normalizer import normalize_listings
 
 router = APIRouter()
 
@@ -10,7 +11,7 @@ router = APIRouter()
 def search(request: SearchRequest) -> dict[str, object]:
     client = AutoDevClient()
     try:
-        return client.search_listings(
+        raw_response = client.search_listings(
             make=request.make,
             model=request.model,
             min_year=request.min_year,
@@ -22,5 +23,6 @@ def search(request: SearchRequest) -> dict[str, object]:
             location=request.location,
             limit=10,
         )
+        return {"data": normalize_listings(raw_response)}
     except Exception:
         raise HTTPException(status_code=502, detail="Upstream listing service request failed") from None

@@ -20,6 +20,12 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("AUTO_DEV_API_KEY", "auto_dev_api_key"),
         description="Auto.dev API key used for external request authorization.",
     )
+    openai_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("OPENAI_API_KEY", "openai_api_key"),
+        description="OpenAI API key used for vehicle ranking.",
+    )
+    openai_ranking_model: str = Field(default="gpt-5-nano")
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",
