@@ -26,6 +26,13 @@ class Settings(BaseSettings):
         description="OpenAI API key used for vehicle ranking.",
     )
     openai_ranking_model: str = Field(default="gpt-5-nano")
+    gemini_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("GEMINI_API_KEY", "gemini_api_key"),
+        description="Gemini API key used for vehicle ranking.",
+    )
+    gemini_ranking_model: str = Field(default="gemini-3.5-flash-lite")
+    ai_ranking_provider: str = Field(default="gemini")
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",

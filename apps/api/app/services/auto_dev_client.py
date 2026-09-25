@@ -71,5 +71,5 @@ class AutoDevClient:
             headers={"Authorization": f"Bearer {self.api_key}"},
             timeout=15.0,
         )
-        response.raise_for_status()
+        response.raise_for_status() 
         return response.json()
