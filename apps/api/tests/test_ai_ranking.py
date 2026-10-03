@@ -49,6 +49,20 @@ def test_openai_ranking_accepts_valid_structured_response(monkeypatch) -> None:
     assert result.rankings[0].vin == "VIN-1"
     assert fake_client.responses.kwargs["model"] == "configured-model"
     assert fake_client.responses.kwargs["text_format"] is AIRankingResult
+    system_prompt = fake_client.responses.kwargs["input"][0]["content"]
+    assert "rank only by user fit and purchase tradeoffs" in system_prompt
+    assert "leave formal anomaly and scam-risk judgments" in system_prompt
+    for restricted_term in (
+        "high-risk",
+        "low-risk",
+        "suspicious",
+        "a scam",
+        "fraudulent",
+        "a fake listing",
+        "anomaly risk",
+    ):
+        assert restricted_term in system_prompt
+    assert "reported accidents reducing desirability" in system_prompt
 
 
 @pytest.mark.parametrize(

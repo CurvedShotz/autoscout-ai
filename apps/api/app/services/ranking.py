@@ -1,14 +1,35 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.models import AIRankingResult, SearchRequest, VehicleListing
+from app.models import (
+    AIRankingResult,
+    SearchRankingContext,
+    SearchRequest,
+    VehicleListing,
+)
+
+RankingContext = SearchRequest | SearchRankingContext
+
+RANKING_SYSTEM_GUIDANCE = (
+    "Compare each provided vehicle candidate against the user's request and rank "
+    "only by user fit and purchase tradeoffs. Consider price and value, mileage, "
+    "year, accident and owner history, user preferences, target price and mileage, "
+    "body style, overall desirability, and other relevant tradeoffs. Do not invent "
+    "vehicles or VINs. Keep ranking separate from listing-risk analysis: explain "
+    "how facts affect fit or desirability, but leave formal anomaly and scam-risk "
+    "judgments to the dedicated listing-risk analyzer. Do not characterize listings "
+    "as high-risk, low-risk, suspicious, a scam, fraudulent, a fake listing, or an "
+    "anomaly risk. You may state grounded tradeoffs, such as reported accidents "
+    "reducing desirability, very high mileage weakening fit, or an unusually low "
+    "listed price making value difficult to assess."
+)
 
 
 class AIRankingService(ABC):
     @abstractmethod
     def rank_listings(
         self,
-        search_request: SearchRequest,
+        search_request: RankingContext,
         listings: list[VehicleListing],
     ) -> AIRankingResult:
         raise NotImplementedError
@@ -35,10 +56,37 @@ def validate_ranking_result(
     return result
 
 
-def ranking_input(search_request: SearchRequest, listings: list[VehicleListing]) -> list[dict[str, Any]]:
-    return [
-        {
-            "search_request": search_request.model_dump(mode="json"),
-            "candidate_listings": [listing.model_dump(mode="json") for listing in listings],
+def ranking_input(
+    search_context: RankingContext,
+    listings: list[VehicleListing],
+) -> list[dict[str, Any]]:
+    semantic_intent: SearchRankingContext | None = None
+    if isinstance(search_context, SearchRequest):
+        search_request = search_context
+    else:
+        semantic_intent = search_context
+        search_request = semantic_intent.search_request
+
+    ranking_payload: dict[str, Any] = {
+        "search_request": search_request.model_dump(mode="json"),
+        "candidate_listings": [listing.model_dump(mode="json") for listing in listings],
+    }
+    if semantic_intent is not None and any(
+        (
+            semantic_intent.makes,
+            semantic_intent.models,
+            semantic_intent.body_styles,
+            semantic_intent.target_price is not None,
+            semantic_intent.target_mileage is not None,
+            semantic_intent.preferences,
+        )
+    ):
+        ranking_payload["semantic_intent"] = {
+            "makes": semantic_intent.makes,
+            "models": semantic_intent.models,
+            "body_styles": semantic_intent.body_styles,
+            "target_price": semantic_intent.target_price,
+            "target_mileage": semantic_intent.target_mileage,
+            "preferences": semantic_intent.preferences,
         }
-    ]
+    return [ranking_payload]

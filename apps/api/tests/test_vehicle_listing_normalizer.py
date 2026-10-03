@@ -1,4 +1,10 @@
-from app.services.vehicle_listing_normalizer import normalize_listing, normalize_listings
+import pytest
+
+from app.services.vehicle_listing_normalizer import (
+    InvalidListingResponseError,
+    normalize_listing,
+    normalize_listings,
+)
 
 
 def test_normalize_listing_maps_nested_auto_dev_fields() -> None:
@@ -62,3 +68,23 @@ def test_normalize_listing_leaves_missing_fields_as_none() -> None:
     assert listing.model is None
     assert listing.price is None
     assert listing.accident_count is None
+
+
+@pytest.mark.parametrize("response", [{"data": []}, {"listings": []}, []])
+def test_normalize_listings_accepts_valid_empty_results(response) -> None:
+    assert normalize_listings(response) == []
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {},
+        {"data": None},
+        {"data": {}},
+        {"data": [None]},
+        {"unexpected": []},
+    ],
+)
+def test_normalize_listings_rejects_unusable_response_shapes(response) -> None:
+    with pytest.raises(InvalidListingResponseError):
+        normalize_listings(response)

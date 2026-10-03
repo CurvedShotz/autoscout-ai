@@ -6,8 +6,14 @@ from google.genai import types
 from pydantic import ValidationError
 
 from app.core.config import get_settings
-from app.models import AIRankingResult, SearchRequest, VehicleListing
-from app.services.ranking import AIRankingService, ranking_input, validate_ranking_result
+from app.models import AIRankingResult, VehicleListing
+from app.services.ranking import (
+    AIRankingService,
+    RANKING_SYSTEM_GUIDANCE,
+    RankingContext,
+    ranking_input,
+    validate_ranking_result,
+)
 
 
 class GeminiRankingService(AIRankingService):
@@ -22,20 +28,14 @@ class GeminiRankingService(AIRankingService):
 
     def rank_listings(
         self,
-        search_request: SearchRequest,
+        search_request: RankingContext,
         listings: list[VehicleListing],
     ) -> AIRankingResult:
         response = self.client.models.generate_content(
             model=self.model,
             contents=json.dumps(ranking_input(search_request, listings)),
             config=types.GenerateContentConfig(
-                system_instruction=(
-                    "Compare each provided vehicle candidate against the user's original "
-                    "search constraints and preferences. Use your judgment to weigh price, "
-                    "mileage, year, accident history, owner history, overall value, and "
-                    "tradeoffs. Rank only the provided candidates. Do not invent vehicles "
-                    "or VINs."
-                ),
+                system_instruction=RANKING_SYSTEM_GUIDANCE,
                 response_mime_type="application/json",
                 response_schema=AIRankingResult,
             ),

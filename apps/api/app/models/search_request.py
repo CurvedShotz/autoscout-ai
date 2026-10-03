@@ -12,6 +12,10 @@ class SearchRequest(BaseModel):
         None,
         description="Vehicle model to search for",
     )
+    body_style: Optional[str] = Field(
+        None,
+        description="Vehicle body style filter; comma-separated values use OR matching",
+    )
     min_year: Optional[int] = Field(
         None,
         ge=1886,

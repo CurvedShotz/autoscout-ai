@@ -130,3 +130,30 @@ def test_search_listings_omits_none_filters_and_keeps_zip_behavior(monkeypatch) 
         "zip": "75001",
     }
     assert captured["headers"]["Authorization"] == "Bearer test-secret-key"
+def test_search_listings_maps_zip_distance_with_other_filters(monkeypatch) -> None:
+    captured = {}
+
+    def fake_get(url: str, *, params: dict | None = None, headers: dict | None = None, timeout: float | None = None):
+        captured["params"] = params
+        request = httpx.Request("GET", url, params=params or {}, headers=headers or {})
+        return httpx.Response(200, request=request, json={"data": []})
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    AutoDevClient(api_key="test-secret-key").search_listings(
+        make="Toyota",
+        model="Camry",
+        max_price=20_000,
+        location="75201",
+        distance=50,
+        limit=10,
+    )
+
+    assert captured["params"] == {
+        "vehicle.make": "Toyota",
+        "vehicle.model": "Camry",
+        "retailListing.price": "-20000",
+        "limit": 10,
+        "zip": "75201",
+        "distance": 50,
+    }

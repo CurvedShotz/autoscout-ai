@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     )
     gemini_ranking_model: str = Field(default="gemini-3.5-flash-lite")
     ai_ranking_provider: str = Field(default="gemini")
+    auto_dev_search_distance_miles: int = Field(default=50, ge=1)
+    location_geocoder_base_url: str = Field(
+        default="https://nominatim.openstreetmap.org"
+    )
+    location_geocoder_user_agent: str = Field(default="AutoScoutAI/1.0")
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",

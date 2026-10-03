@@ -56,6 +56,20 @@ def test_gemini_ranking_accepts_structured_result_and_uses_configured_model(monk
     config = client.models.call["config"]
     assert config.response_mime_type == "application/json"
     assert config.response_schema is AIRankingResult
+    assert "rank only by user fit and purchase tradeoffs" in config.system_instruction
+    assert "leave formal anomaly and scam-risk judgments" in config.system_instruction
+    for restricted_term in (
+        "high-risk",
+        "low-risk",
+        "suspicious",
+        "a scam",
+        "fraudulent",
+        "a fake listing",
+        "anomaly risk",
+    ):
+        assert restricted_term in config.system_instruction
+    assert "very high mileage weakening fit" in config.system_instruction
+    assert "unusually low listed price making value difficult to assess" in config.system_instruction
     assert "candidate_listings" in client.models.call["contents"]
     assert "max_price" in client.models.call["contents"]
 

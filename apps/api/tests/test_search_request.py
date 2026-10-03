@@ -29,6 +29,7 @@ def test_search_request_all_fields_optional() -> None:
 
     assert request.make is None
     assert request.model is None
+    assert request.body_style is None
     assert request.min_year is None
     assert request.max_year is None
     assert request.min_price is None

@@ -4,6 +4,10 @@ from typing import Any
 from app.models import VehicleListing
 
 
+class InvalidListingResponseError(ValueError):
+    """Raised when a provider response cannot be interpreted as a listing set."""
+
+
 def _first_value(source: Mapping[str, Any], *names: str) -> Any:
     for name in names:
         if name in source:
@@ -48,11 +52,23 @@ def normalize_listing(raw_listing: Mapping[str, Any]) -> VehicleListing:
 
 def normalize_listings(raw_response: Any) -> list[VehicleListing]:
     if isinstance(raw_response, Mapping):
-        raw_listings = raw_response.get("data", raw_response.get("listings", []))
+        if "data" in raw_response:
+            raw_listings = raw_response["data"]
+        elif "listings" in raw_response:
+            raw_listings = raw_response["listings"]
+        else:
+            raise InvalidListingResponseError(
+                "Listing response is missing a data or listings array"
+            )
     else:
         raw_listings = raw_response
 
     if not isinstance(raw_listings, list):
-        return []
+        raise InvalidListingResponseError("Listing response data must be an array")
 
-    return [normalize_listing(listing) for listing in raw_listings if isinstance(listing, Mapping)]
+    if any(not isinstance(listing, Mapping) for listing in raw_listings):
+        raise InvalidListingResponseError(
+            "Listing response data contains an invalid listing"
+        )
+
+    return [normalize_listing(listing) for listing in raw_listings]

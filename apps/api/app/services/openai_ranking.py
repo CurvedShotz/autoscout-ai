@@ -4,8 +4,14 @@ from typing import Any
 from openai import OpenAI
 
 from app.core.config import get_settings
-from app.models import AIRankingResult, SearchRequest, VehicleListing
-from app.services.ranking import AIRankingService, ranking_input, validate_ranking_result
+from app.models import AIRankingResult, VehicleListing
+from app.services.ranking import (
+    AIRankingService,
+    RANKING_SYSTEM_GUIDANCE,
+    RankingContext,
+    ranking_input,
+    validate_ranking_result,
+)
 
 
 class OpenAIRankingService(AIRankingService):
@@ -20,7 +26,7 @@ class OpenAIRankingService(AIRankingService):
 
     def rank_listings(
         self,
-        search_request: SearchRequest,
+        search_request: RankingContext,
         listings: list[VehicleListing],
     ) -> AIRankingResult:
         response = self.client.responses.parse(
@@ -28,12 +34,7 @@ class OpenAIRankingService(AIRankingService):
             input=[
                 {
                     "role": "system",
-                    "content": (
-                        "Compare the candidate vehicles against the user's request. "
-                        "Rank only candidates provided. Consider price, mileage, year, "
-                        "accident history, owner count, one-owner status, overall value, "
-                        "and tradeoffs. Do not invent cars or VINs."
-                    ),
+                    "content": RANKING_SYSTEM_GUIDANCE,
                 },
                 {
                     "role": "user",
