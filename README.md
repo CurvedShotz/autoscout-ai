@@ -194,6 +194,11 @@ The architecture keeps major responsibilities isolated:
 - pytest
 - uv
 
+## Deployment
+
+Deployment preparation and the App Runner, S3, and CloudFront configuration
+requirements are documented in [docs/deployment.md](docs/deployment.md).
+
 ### AI
 
 - Google Gemini through the `google-genai` SDK

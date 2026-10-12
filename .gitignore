@@ -59,6 +59,7 @@ lerna-debug.log*
 # Next.js / Build Artifacts
 .next/
 out/
+*.tsbuildinfo
 .turbo/
 .cache/
 

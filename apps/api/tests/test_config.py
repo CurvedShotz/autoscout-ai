@@ -20,3 +20,29 @@ def test_settings_require_auto_dev_api_key(tmp_path, monkeypatch: pytest.MonkeyP
 
     with pytest.raises(ValidationError, match="AUTO_DEV_API_KEY"):
         Settings(_env_file=empty_env)
+
+
+def test_settings_parse_comma_separated_cors_origins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AUTO_DEV_API_KEY", "test-auto-dev-key")
+    monkeypatch.setenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000, https://danielolowe.com",
+    )
+
+    settings = Settings(_env_file=None)
+
+    assert settings.cors_origins == [
+        "http://localhost:3000",
+        "https://danielolowe.com",
+    ]
+
+
+def test_settings_reject_wildcard_cors_origin() -> None:
+    with pytest.raises(ValidationError, match="wildcard origin"):
+        Settings(
+            _env_file=None,
+            AUTO_DEV_API_KEY="test-auto-dev-key",
+            CORS_ORIGINS=["*"],
+        )

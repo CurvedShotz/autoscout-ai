@@ -3,14 +3,21 @@ import {
   type NaturalSearchResponse,
 } from "@/lib/search-types";
 
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
+const LOCAL_API_BASE_URL = "http://127.0.0.1:8000";
 
 export async function searchNaturally(
   query: string,
 ): Promise<NaturalSearchResponse> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") ||
-    DEFAULT_API_BASE_URL;
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  const baseUrl = configuredBaseUrl
+    ? configuredBaseUrl.replace(/\/+$/, "")
+    : process.env.NODE_ENV === "development"
+      ? LOCAL_API_BASE_URL
+      : "";
+
+  if (!baseUrl) {
+    throw new Error("The search service is not configured. Please try again later.");
+  }
 
   let response: Response;
   try {
